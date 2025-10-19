@@ -17,21 +17,12 @@ public class Plugin : BaseUnityPlugin
 
     private void Awake() => Logger.Log(Constants.Description);
 
-    private void Start()
-    {
-        GorillaTagger.OnPlayerSpawned(OnPlayerSpawned);
-
-        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable
-        {
-                {
-                        Constants.NetworkKey, null
-                },
-        });
-    }
+    private void Start() => GorillaTagger.OnPlayerSpawned(OnPlayerSpawned);
 
     private void OnPlayerSpawned()
     {
 #region VRView
+        
         Stream bundleStream = Assembly.GetExecutingAssembly()
                                       .GetManifestResourceStream("GorillaMediaDisplay.Assets.gorillamediadisplay");
 
@@ -43,19 +34,18 @@ public class Plugin : BaseUnityPlugin
         
         // ReSharper disable once PossibleNullReferenceException
         // ReSharper disable once Unity.InstantiateWithoutParent
-        //mediaDisplay.transform.SetParent(Camera.main.transform, false);
-        mediaDisplay.transform.SetParent(GTPlayer.Instance.headCollider.transform, false);
+        mediaDisplay.transform.SetParent(Camera.main.transform, false);
         mediaDisplay.transform.localPosition = new Vector3(-0.3446f, 0.1754f, 0.5489f);
         mediaDisplay.transform.localRotation = Quaternion.Euler(0f, 70f, -5f);
         mediaDisplay.transform.localScale    = Vector3.one * 0.015f;
-        mediaDisplay.SetLayer(UnityLayer.FirstPersonOnly);
-        mediaDisplay.layer = LayerMask.NameToLayer("FirstPersonOnly");
+        mediaDisplay.SetLayer(UnityLayer.FirstPersonOnly);  //no work, idk why but yeah?
 
         mediaDisplay.AddComponent<UIManager>();
         UIManager.MediaDisplay = mediaDisplay;
 
         mediaDisplay.AddComponent<NetworkingManager>();
         mediaDisplay.AddComponent<MediaManager>();
+        
 #endregion
 
 #region PCView

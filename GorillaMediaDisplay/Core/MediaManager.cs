@@ -9,13 +9,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json;
 
+// ReSharper disable InconsistentNaming
+
 namespace GorillaMediaDisplay
 {
     public class MediaManager : MonoBehaviour
     {
         public static string Title { get; private set; } = "Loading...";
         public static string Artist { get; private set; } = "Loading...";
-        public static string AlbumArt { get; private set; } = "INVALIDJSONHASH";
+        public static string AlbumArt { get; private set; } = "InvalidArtHash";
         public static Texture2D Icon { get; private set; } = new Texture2D(2, 2);
         public static bool Paused { get; private set; } = true;
         public static bool ValidData { get; private set; }
@@ -39,6 +41,7 @@ namespace GorillaMediaDisplay
 
             using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcePath);
             using FileStream fs = new FileStream(quickSongPath, FileMode.Create, FileAccess.Write);
+            // ReSharper disable once PossibleNullReferenceException
             stream.CopyTo(fs);
         }
 
@@ -53,7 +56,8 @@ namespace GorillaMediaDisplay
                 CreateNoWindow = true
             };
 
-            using Process proc = new Process { StartInfo = psi };
+            using Process proc = new Process();
+            proc.StartInfo = psi;
             proc.Start();
             string output = await proc.StandardOutput.ReadToEndAsync();
 
@@ -63,7 +67,7 @@ namespace GorillaMediaDisplay
             Paused = true;
             Title = "No Media";
             Artist = "Detected";
-            AlbumArt = "INVALIDJSONHASH";
+            AlbumArt = "InvalidArtHash";
 
             StartTime = 0f;
             EndTime = 0f;
@@ -84,21 +88,22 @@ namespace GorillaMediaDisplay
 
                 if (data.ContainsKey("ThumbnailBase64") && !string.IsNullOrEmpty((string)data["ThumbnailBase64"]))
                 {
-                    byte[] thumbBytes = Convert.FromBase64String((string)data["ThumbnailBase64"]);
-                    using (var md5 = System.Security.Cryptography.MD5.Create())
-                    {
-                        byte[] hash = md5.ComputeHash(thumbBytes);
-                        AlbumArt = BitConverter.ToString(hash).Replace("-", "").ToLower();
-                    }
+                    byte[]    thumbBytes = Convert.FromBase64String((string)data["ThumbnailBase64"]);
+                    using var md5        = System.Security.Cryptography.MD5.Create();
+                    byte[]    hash       = md5.ComputeHash(thumbBytes);
+                    AlbumArt = BitConverter.ToString(hash).Replace("-", "").ToLower();
                 }
                 else
                 {
-                    AlbumArt = "NOTHUMBNAILHASH [Err -01]";
+                    AlbumArt = "CouldNotGetArtHash [Err -01]";
                 }
 
                 ValidData = true;
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         IEnumerator UpdateDataCoroutine(float delay = 0f)

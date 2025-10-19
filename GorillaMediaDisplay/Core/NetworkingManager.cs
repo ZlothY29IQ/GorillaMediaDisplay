@@ -15,14 +15,14 @@ public class NetworkingManager : MonoBehaviour
                 $"Title: {MediaManager.Title}\n" +
                 $"Artist: {MediaManager.Artist}\n" +
                 $"AlbumArt Hash: {MediaManager.AlbumArt}\n" +
-                $"Time: {GMDUtilities.FormatTime(MediaManager.ElapsedTime)} / {GMDUtilities.FormatTime(MediaManager.EndTime)}\n" +
-                $"IsPlaying: {!MediaManager.Paused}";
-
-        Hashtable props = new()
+                $"Progression: {GMDUtilities.FormatTime(MediaManager.ElapsedTime)} / {GMDUtilities.FormatTime(MediaManager.EndTime)}\n" +
+                $"Status: {(MediaManager.Paused ? "Paused" : "Playing")}";
+        
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable
         {
-                { Constants.NetworkKey, formattedMediaData },
-        };
-
-        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+                {
+                        Constants.NetworkKey, formattedMediaData
+                },
+        });
     }
 }

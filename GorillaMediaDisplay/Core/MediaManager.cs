@@ -119,7 +119,7 @@ namespace GorillaMediaDisplay
         {
             if (Time.time > updateDataLatency)
             {
-                updateDataLatency = Time.time + 1f;
+                updateDataLatency = Time.time + 5f;
                 StartCoroutine(UpdateDataCoroutine());
             }
 

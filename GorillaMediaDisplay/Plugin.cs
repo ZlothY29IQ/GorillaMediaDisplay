@@ -1,10 +1,7 @@
 ﻿using System.IO;
 using System.Reflection;
 using BepInEx;
-using ExitGames.Client.Photon;
-using GorillaLocomotion;
 using GorillaMediaDisplay.Core;
-using Photon.Pun;
 using UnityEngine;
 
 namespace GorillaMediaDisplay;
@@ -21,6 +18,8 @@ public class Plugin : BaseUnityPlugin
 
     private void OnPlayerSpawned()
     {
+        //Yes I know im loading two asset bundles, im not an idiot I just lost the original unity project and im too lazy to recreate.
+        
 #region VRView
         
         Stream bundleStream = Assembly.GetExecutingAssembly()

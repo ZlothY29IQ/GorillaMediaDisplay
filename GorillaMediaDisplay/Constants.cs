@@ -1,8 +1,5 @@
 ﻿namespace GorillaMediaDisplay;
 
-/// <summary>
-///     This class is used to provide information about your mod to BepInEx.
-/// </summary>
 internal class Constants
 {
     public const string GUID = "zlothy.gorillamediadisplay";
@@ -12,5 +9,5 @@ internal class Constants
             "Shows what media you are listening to in the top left of your screen in vr and on pc.";
 
     public const string NetworkKey = "github.com/ZlothY29IQ/GorillaMediaDisplay";
-    public const string Version    = "1.1.0";
+    public const string Version    = "1.1.1";
 }

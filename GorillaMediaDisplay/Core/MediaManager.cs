@@ -9,8 +9,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json;
 
-// ReSharper disable InconsistentNaming
-
 namespace GorillaMediaDisplay
 {
     public class MediaManager : MonoBehaviour
@@ -26,21 +24,18 @@ namespace GorillaMediaDisplay
         public static float EndTime { get; private set; }
         public static float ElapsedTime { get; private set; }
 
-        public static string quickSongPath { get; private set; }
-        public static MediaManager instance { get; private set; }
+        public static string QuickSongPath { get; private set; }
+        public static MediaManager Instance { get; private set; }
 
         public void Awake()
         {
-            instance = this;
-
+            Instance = this;
             string resourcePath = "GorillaMediaDisplay.Assets.QuickSong.exe";
-            quickSongPath = Path.Combine(Path.GetTempPath(), "QuickSong.exe");
-
-            if (File.Exists(quickSongPath))
-                File.Delete(quickSongPath);
-
+            QuickSongPath = Path.Combine(Path.GetTempPath(), "QuickSong.exe");
+            if (File.Exists(QuickSongPath))
+                File.Delete(QuickSongPath);
             using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcePath);
-            using FileStream fs = new FileStream(quickSongPath, FileMode.Create, FileAccess.Write);
+            using FileStream fs = new FileStream(QuickSongPath, FileMode.Create, FileAccess.Write);
             // ReSharper disable once PossibleNullReferenceException
             stream.CopyTo(fs);
         }
@@ -49,7 +44,7 @@ namespace GorillaMediaDisplay
         {
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = quickSongPath,
+                FileName = QuickSongPath,
                 Arguments = "-all",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -60,7 +55,6 @@ namespace GorillaMediaDisplay
             proc.StartInfo = psi;
             proc.Start();
             string output = await proc.StandardOutput.ReadToEndAsync();
-
             await Task.Run(() => proc.WaitForExit());
 
             ValidData = false;
@@ -68,7 +62,6 @@ namespace GorillaMediaDisplay
             Title = "No Media";
             Artist = "Detected";
             AlbumArt = "InvalidArtHash";
-
             StartTime = 0f;
             EndTime = 0f;
             ElapsedTime = 0f;
@@ -78,27 +71,52 @@ namespace GorillaMediaDisplay
                 Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(output);
                 Title = (string)data["Title"];
                 Artist = (string)data["Artist"];
-
                 StartTime = Convert.ToSingle(data["StartTime"]);
                 EndTime = Convert.ToSingle(data["EndTime"]);
                 ElapsedTime = Convert.ToSingle(data["ElapsedTime"]);
-
                 Paused = (string)data["Status"] != "Playing";
                 Icon.LoadImage(Convert.FromBase64String((string)data["ThumbnailBase64"]));
-
                 if (data.ContainsKey("ThumbnailBase64") && !string.IsNullOrEmpty((string)data["ThumbnailBase64"]))
                 {
-                    byte[]    thumbBytes = Convert.FromBase64String((string)data["ThumbnailBase64"]);
-                    using var md5        = System.Security.Cryptography.MD5.Create();
-                    byte[]    hash       = md5.ComputeHash(thumbBytes);
+                    byte[] thumbBytes = Convert.FromBase64String((string)data["ThumbnailBase64"]);
+                    using var md5 = System.Security.Cryptography.MD5.Create();
+                    byte[] hash = md5.ComputeHash(thumbBytes);
                     AlbumArt = BitConverter.ToString(hash).Replace("-", "").ToLower();
                 }
                 else
                 {
                     AlbumArt = "CouldNotGetArtHash [Err -01]";
                 }
-
                 ValidData = true;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        public static async Task QuickStatusUpdateAsync()
+        {
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = QuickSongPath,
+                    Arguments = "-status",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                };
+
+                using Process proc = new Process();
+                proc.StartInfo = psi;
+                proc.Start();
+                string output = await proc.StandardOutput.ReadToEndAsync();
+                await Task.Run(() => proc.WaitForExit());
+
+                Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(output);
+                Paused = (string)data["Status"] != "Playing";
+                ElapsedTime = Convert.ToSingle(data["ElapsedTime"]);
             }
             catch
             {
@@ -109,17 +127,24 @@ namespace GorillaMediaDisplay
         IEnumerator UpdateDataCoroutine(float delay = 0f)
         {
             yield return new WaitForSeconds(delay);
-
             _ = UpdateDataAsync();
             yield return null;
         }
 
-        private static float updateDataLatency;
+        private static float nextFullUpdate;
+        private static float nextQuickUpdate;
+
         public void Update()
         {
-            if (Time.time > updateDataLatency)
+            if (Time.time > nextQuickUpdate)
             {
-                updateDataLatency = Time.time + 1f;
+                nextQuickUpdate = Time.time + 0.3f;
+                _ = QuickStatusUpdateAsync();
+            }
+
+            if (Time.time > nextFullUpdate)
+            {
+                nextFullUpdate = Time.time + 5f;
                 StartCoroutine(UpdateDataCoroutine());
             }
 

@@ -34,7 +34,7 @@ public class PCUIManager : MonoBehaviour
     private void LateUpdate()
     {
         // ReSharper disable once InvertIf
-        if (MediaManager.instance == null)
+        if (MediaManager.Instance == null)
         {
             // ReSharper disable once Unity.PerformanceCriticalCodeInvocation
             Debug.LogWarning("MediaManager's instance is null");
